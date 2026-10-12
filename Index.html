@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cifrado César con Clave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos base adicionales para una apariencia suave */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        /* Personalización de la barra de desplazamiento para las áreas de texto */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f3f4f6; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #d8b4fe; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #a855f7; 
+        }
+    </style>
+</head>
+<body class="bg-purple-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 sm:p-8 transition-all duration-300">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-purple-800 tracking-tight">Cifrado César</h1>
+            <p class="text-purple-600 mt-2 text-sm">Alfabeto latino de 27 letras (Incluye Ñ)</p>
+        </header>
+
+        <div class="bg-purple-100 rounded-xl p-5 mb-6 border border-purple-200">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <!-- Selector de Clave -->
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <label for="shift-key" class="font-semibold text-purple-900 whitespace-nowrap">Clave de rotación:</label>
+                    <input type="number" id="shift-key" value="3" 
+                        class="w-20 px-3 py-2 text-center text-lg font-bold text-purple-700 bg-white border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-colors shadow-sm">
+                </div>
+
+                <!-- Selector de Modo -->
+                <div class="flex bg-white rounded-lg p-1 border border-purple-200 shadow-sm w-full sm:w-auto justify-center">
+                    <label class="relative flex-1 sm:flex-none">
+                        <input type="radio" name="mode" value="encode" checked class="peer sr-only">
+                        <div class="px-4 py-2 text-sm font-medium text-center text-gray-500 rounded-md cursor-pointer peer-checked:bg-purple-600 peer-checked:text-white transition-colors">
+                            Codificar
+                        </div>
+                    </label>
+                    <label class="relative flex-1 sm:flex-none">
+                        <input type="radio" name="mode" value="decode" class="peer sr-only">
+                        <div class="px-4 py-2 text-sm font-medium text-center text-gray-500 rounded-md cursor-pointer peer-checked:bg-purple-600 peer-checked:text-white transition-colors">
+                            Decodificar
+                        </div>
+                    </label>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Entrada -->
+            <div>
+                <label for="input-text" class="block text-sm font-bold text-gray-700 mb-2">Texto de entrada</label>
+                <textarea id="input-text" rows="4" placeholder="Escribe aquí tu mensaje (puedes usar la ñ)..."
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:bg-white transition-all shadow-sm resize-none"></textarea>
+            </div>
+
+            <!-- Salida -->
+            <div>
+                <label for="output-text" class="block text-sm font-bold text-gray-700 mb-2">Resultado</label>
+                <textarea id="output-text" rows="4" readonly placeholder="El resultado aparecerá aquí en tiempo real..."
+                    class="w-full px-4 py-3 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl focus:outline-none shadow-inner resize-none cursor-default"></textarea>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputText = document.getElementById('input-text');
+            const outputText = document.getElementById('output-text');
+            const shiftInput = document.getElementById('shift-key');
+            const modeRadios = document.querySelectorAll('input[name="mode"]');
+
+            // Alfabeto personalizado de 27 caracteres
+            const alfabetoUpper = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+            const alfabetoLower = "abcdefghijklmnñopqrstuvwxyz";
+            const numLetras = 27;
+
+            /**
+             * Aplica el cifrado César al texto dado.
+             * @param {string} text - El texto a procesar.
+             * @param {number} shift - Cantidad de rotaciones.
+             * @returns {string} El texto resultante.
+             */
+            function procesarCifrado(text, shift) {
+                // Manejar rotaciones negativas y mayores que 27 para que siempre estén entre 0 y 26
+                const rotacion = ((shift % numLetras) + numLetras) % numLetras;
+                
+                // Reemplazamos usando expresiones regulares, identificando explícitamente a-z y ñ
+                return text.replace(/[a-zA-ZñÑ]/g, (char) => {
+                    // Verificar si es mayúscula o minúscula
+                    if (alfabetoUpper.includes(char)) {
+                        const indiceActual = alfabetoUpper.indexOf(char);
+                        const nuevoIndice = (indiceActual + rotacion) % numLetras;
+                        return alfabetoUpper[nuevoIndice];
+                    } else if (alfabetoLower.includes(char)) {
+                        const indiceActual = alfabetoLower.indexOf(char);
+                        const nuevoIndice = (indiceActual + rotacion) % numLetras;
+                        return alfabetoLower[nuevoIndice];
+                    }
+                    return char;
+                });
+            }
+
+            /**
+             * Lee el estado actual de la UI y actualiza el texto de salida
+             */
+            function actualizarInterfaz() {
+                const textoOriginal = inputText.value;
+                const desplazamiento = parseInt(shiftInput.value) || 0;
+                
+                // Encontrar qué radio button está seleccionado
+                const modoSeleccionado = document.querySelector('input[name="mode"]:checked').value;
+                
+                // Si es decodificar, invertimos el desplazamiento
+                const desplazamientoFinal = (modoSeleccionado === 'encode') ? desplazamiento : -desplazamiento;
+                
+                // Procesar y mostrar
+                outputText.value = procesarCifrado(textoOriginal, desplazamientoFinal);
+            }
+
+            // --- Listeners de Eventos ---
+            // Se activan al escribir o borrar texto
+            inputText.addEventListener('input', actualizarInterfaz);
+            
+            // Se activan al modificar el número de la clave
+            shiftInput.addEventListener('input', actualizarInterfaz);
+            
+            // Se activan al cambiar entre Codificar / Decodificar
+            modeRadios.forEach(radio => {
+                radio.addEventListener('change', actualizarInterfaz);
+            });
+            
+            // Evitar que el input de número quede vacío al perder el foco
+            shiftInput.addEventListener('blur', () => {
+                if(shiftInput.value === '') {
+                    shiftInput.value = '0';
+                    actualizarInterfaz();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
